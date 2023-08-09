@@ -6,17 +6,27 @@
     ansible_sudo_pass: admin
     pre_tasks:
       - name: Install EPEL repo
-        package: name=epel-release state=present
+        package: name='{{ item }}' state=present
         when: ansible_distribution == "CentOS"
+        loop:
+          - epel-release
+          - wget
+          - git
       - name: install python pip
         yum: name=python-pip state=present update_cache=yes   
       - name: Install docker python
         pip: name=docker-py
 
   tasks:
+    - name: copy website emplate
+      template:
+        src: template/index.html.j2
+        dest: /home/admin/index.html  
     - name: Create Apache container
       docker_container:
         name: webapp
         image: httpd
         ports:
           - "80:80"
+        volumes: 
+          - /home/admin/index.html:/usr/local/apache2/htdocs/index.html
